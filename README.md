@@ -18,18 +18,33 @@ YOLOv8n 检测车牌 → 颜色分析与倾斜矫正 → PaddleOCR 识别车牌�
 - 已实现图片、批量、视频和 GUI 入口
 - 已提供 CCPD 转 YOLO 数据脚本与训练脚本
 - 已提供定位率、识别率、字符准确率和耗时评估
-- 尚未下载模型、安装大型依赖或开始训练
+- 已在 E 盘创建 Python 3.11 环境
+- 已完成 YOLO + PaddleOCR 端到端冒烟测试
+- 尚未使用自训练权重和独立测试集完成最终评估
+
+## 环境
+
+虚拟环境：
+
+```text
+E:\venvs\lpr311
+```
+
+激活：
+
+```powershell
+. .\activate_env.ps1
+```
+
+当前环境包含 CUDA 12.4 版 PyTorch、Ultralytics 8.4.202、PaddleOCR 2.9.1 和 PaddlePaddle 2.6.2。
 
 ## 快速开始
 
-推荐使用 Python 3.11，并按 `docs/ENVIRONMENT.md` 将虚拟环境放在空间充足的磁盘。
-
 ```powershell
-# 激活环境后
-pip install -r requirements.txt
+. .\activate_env.ps1
 
 # 1. 转换 CCPD 数据
-python scripts/prepare_ccpd.py --ccpd-dir D:\datasets\CCPD --max-images 12000
+python scripts/prepare_ccpd.py --ccpd-dir E:\datasets\CCPD --max-images 12000
 
 # 2. 训练 YOLOv8n
 python scripts/train_yolo.py --epochs 50 --batch 8 --device 0
@@ -62,6 +77,7 @@ data/models/yolov8n_plate.pt
 license_plate_recognition/
 ├── main.py                         # 命令行入口
 ├── run_gui.py                      # GUI 入口
+├── activate_env.ps1                # E 盘环境激活
 ├── config.py                       # 路径与运行参数
 ├── requirements.txt
 ├── modules/
@@ -94,7 +110,7 @@ license_plate_recognition/
 
 - `docs/PRINCIPLES.md`：YOLO、PaddleOCR、透视变换和置信度融合原理
 - `docs/ARCHITECTURE.md`：模块职责、数据流与扩展点
-- `docs/ENVIRONMENT.md`：Windows 环境与 GPU 配置
+- `docs/ENVIRONMENT.md`：E 盘环境、CUDA 和依赖版本
 - `docs/DATASET.md`：CCPD 转换与自建测试集规范
 - `docs/EXPERIMENTS.md`：指标与消融实验设计
 
@@ -106,3 +122,4 @@ license_plate_recognition/
 - 不使用全局 `O→0`、`I→1` 替换，纠错必须受车牌位置约束
 - 视频采用抽帧推理并缓存结果，避免每帧都运行 OCR
 - 测试集必须独立于训练集，不能用训练图片报告“高准确率”
+- 当前 `data/models/yolov8n_plate.pt` 是冒烟测试权重，最终应替换为在 CCPD 子集上重新训练的权重

@@ -1,35 +1,68 @@
 # 环境配置
 
-## 推荐环境
+## 当前已配置环境
 
-| 项目 | 建议 |
+| 项目 | 当前值 |
 |---|---|
-| 操作系统 | Windows 10/11 |
-| Python | 3.11 |
-| GPU | NVIDIA RTX 3050 4GB 或更高 |
-| YOLO | Ultralytics + PyTorch CUDA |
-| OCR | PaddlePaddle 2.6.2 + PaddleOCR 2.9.1 |
-| OCR 设备 | 默认 CPU，避免 Windows 下 Paddle GPU 兼容问题 |
+| Python | 3.11.0 |
+| 虚拟环境 | `E:\venvs\lpr311` |
+| PyTorch | 2.6.0 + CUDA 12.4 |
+| GPU | NVIDIA RTX 3050 Laptop GPU，4GB |
+| OpenCV | 4.10.0 |
+| NumPy | 1.26.4 |
+| Ultralytics | 8.4.202 |
+| PaddlePaddle | 2.6.2 |
+| PaddleOCR | 2.9.1 |
+| OCR 设备 | CPU |
 
-当前 C 盘剩余空间较少，建议虚拟环境放在 D 盘或 E 盘，例如：
+激活环境：
 
 ```powershell
-D:\venvs\lpr311\Scripts\Activate.ps1
+cd C:\Users\HP\Desktop\license_plate_recognition
+. .\activate_env.ps1
 ```
+
+或者直接调用：
+
+```powershell
+E:\venvs\lpr311\Scripts\python.exe main.py --help
+```
+
+## 验证环境
+
+```powershell
+E:\venvs\lpr311\Scripts\python.exe scripts\check_environment.py
+```
+
+已经验证：
+
+- `torch.cuda.is_available() == True`
+- CUDA 版本为 12.4
+- GPU 能被 PyTorch 识别
+- PaddleOCR 2.9.1 能初始化中文模型
+- YOLO 检测与 PaddleOCR 已完成端到端冒烟测试
+
+## 已验证的样例
+
+```text
+京CHX389   blue    det=0.995  ocr=0.998  valid=True
+冀RDC3750  green   det=0.989  ocr=0.970  valid=True
+冀RX10J5   blue    det=0.994  ocr=0.993  valid=True
+```
+
+首次图片处理约 12 秒，其中包含 OCR 模型初始化；同一进程后续图片约 100–250 ms。
 
 ## 安装顺序
 
 ### 1. 创建 Python 3.11 环境
 
 ```powershell
-py -3.11 -m venv D:\venvs\lpr311
-D:\venvs\lpr311\Scripts\Activate.ps1
+py -3.11 -m venv E:\venvs\lpr311
+E:\venvs\lpr311\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 ```
 
 ### 2. 安装 CUDA 版 PyTorch
-
-如果使用 NVIDIA GPU：
 
 ```powershell
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
@@ -43,54 +76,20 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 ### 3. 安装项目依赖
 
-进入项目目录：
-
 ```powershell
 cd C:\Users\HP\Desktop\license_plate_recognition
 pip install -r requirements.txt
 ```
 
-PaddleOCR 第一次运行会自动下载中文检测/识别模型。模型下载需要网络。
-
-### 4. 检查环境
-
-```powershell
-python scripts/check_environment.py
-```
-
-期望确认：
-
-- `torch.cuda.is_available() == True`
-- `ultralytics` 可导入
-- `paddleocr` 可导入
-- OpenCV 可导入
-
-## 运行参数
-
-默认 YOLO 权重：
+PaddleOCR 第一次运行会自动下载中文模型。当前模型缓存位于：
 
 ```text
-data/models/yolov8n_plate.pt
-```
-
-默认输出：
-
-```text
-outputs/json
-outputs/images
-outputs/video
-```
-
-常用环境变量：
-
-```powershell
-$env:LPR_DEVICE = "0"
-$env:LPR_OCR_USE_GPU = "false"
+C:\Users\HP\.paddleocr
 ```
 
 ## Windows 注意事项
 
-1. PowerShell 首次执行脚本可能需要调整执行策略，按学校环境要求处理。
-2. PaddleOCR 和 OpenCV 都依赖 NumPy，必须使用 `numpy<2.0`，否则 PaddleOCR 2.9.1 可能出现兼容问题。
-3. 不要同时运行两个大型 GPU 推理任务，4GB 显存容易不足。
-4. 初次模型下载或 OCR 初始化可能较慢，不代表程序卡死。
+1. PaddleOCR 2.9.1 必须使用 `numpy<2.0`，项目已固定为 NumPy 1.26.4。
+2. OpenCV 的三种发行包必须保持版本一致，项目已统一为 4.10.0.84。
+3. PaddleOCR 当前使用 CPU，YOLO 使用 GPU，避免 Windows 下 Paddle GPU 兼容问题。
+4. 4GB 显存取 YOLOv8n 足够，但不适合大 batch 训练。
