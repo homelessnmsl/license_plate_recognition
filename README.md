@@ -36,7 +36,7 @@ E:\venvs\lpr311
 . .\activate_env.ps1
 ```
 
-当前环境包含 CUDA 12.4 版 PyTorch、Ultralytics 8.4.202、PaddleOCR 2.9.1 和 PaddlePaddle 2.6.2。
+当前环境包含 CUDA 12.4 版 PyTorch、Ultralytics 8.4.202、PaddleOCR 2.9.1 和 PaddlePaddle 2.6.2。完整版本见 `requirements-lock.txt`。
 
 ## 快速开始
 
@@ -80,6 +80,7 @@ license_plate_recognition/
 ├── activate_env.ps1                # E 盘环境激活
 ├── config.py                       # 路径与运行参数
 ├── requirements.txt
+├── requirements-lock.txt
 ├── modules/
 │   ├── schemas.py                  # 数据类型
 │   ├── preprocessing.py            # 图像读取与 OCR 增强
