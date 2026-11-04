@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+venv38/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Model weights
+data/models/*
+!data/models/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.pdmodel
+*.pdiparams
+
+# Datasets / generated outputs
+data/yolo/images/**/*
+data/yolo/labels/**/*
+!data/yolo/images/**/.gitkeep
+!data/yolo/labels/**/.gitkeep
+data/test/*.jpg
+data/test/*.jpeg
+data/test/*.png
+data/test/*.bmp
+data/test/*.webp
+!data/test/.gitkeep
+data/images/*
+data/labels/*
+!data/images/.gitkeep
+!data/labels/.gitkeep
+outputs/*
+!outputs/images/.gitkeep
+!outputs/json/.gitkeep
+!outputs/video/.gitkeep
+runs/
+
+# Logs
+*.log
+logs/
