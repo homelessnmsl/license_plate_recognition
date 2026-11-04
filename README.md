@@ -20,7 +20,8 @@ YOLOv8n 检测车牌 → 颜色分析与倾斜矫正 → PaddleOCR 识别车牌�
 - 已提供定位率、识别率、字符准确率和耗时评估
 - 已在 E 盘创建 Python 3.11 环境
 - 已完成 YOLO + PaddleOCR 端到端冒烟测试
-- 尚未使用自训练权重和独立测试集完成最终评估
+- 已准备 11,700 张 YOLO 训练/验证数据和 30 张独立测试图
+- 尚未使用自训练权重完成最终测试
 
 ## 环境
 
@@ -43,26 +44,35 @@ E:\venvs\lpr311
 ```powershell
 . .\activate_env.ps1
 
-# 1. 转换 CCPD 数据
-python scripts/prepare_ccpd.py --ccpd-dir E:\datasets\CCPD --max-images 12000
+# 1. 下载并抽取 CCPD 子集
+python scripts/prepare_ccpd_subset.py --root E:\license_plate_data --test-dir data\test
 
-# 2. 训练 YOLOv8n
+# 2. 转换为 YOLO 格式
+python scripts/prepare_ccpd.py --ccpd-dir E:\license_plate_data\raw\ccpd_mixed_12k --output E:\license_plate_data\yolo --val-ratio 0.15
+
+# 3. 训练 YOLOv8n
 python scripts/train_yolo.py --epochs 50 --batch 8 --device 0
 
-# 3. 单张图片
+# 4. 单张图片
 python main.py --image data/test/example.jpg --gpu
 
-# 4. 批量图片
+# 5. 批量图片
 python main.py --image data/test --gpu
 
-# 5. 视频
+# 6. 视频
 python main.py --video data/test/example.mp4 --gpu --frame-skip 3
 
-# 6. GUI
+# 7. GUI
 python run_gui.py
 
-# 7. 评估
+# 8. 评估
 python scripts/evaluate.py
+```
+
+数据目录：
+
+```text
+E:\license_plate_data\yolo
 ```
 
 YOLO 默认权重路径：
@@ -113,7 +123,8 @@ license_plate_recognition/
 - `docs/ARCHITECTURE.md`：模块职责、数据流与扩展点
 - `docs/ENVIRONMENT.md`：E 盘环境、CUDA 和依赖版本
 - `docs/DATASET.md`：CCPD 转换与自建测试集规范
-- `docs/EXPERIMENTS.md`：指标与消融实验设计
+- docs/DATA_SUMMARY.md：CCPD 子集、数据划分与基线结果
+- docs/EXPERIMENTS.md：指标与消融实验设计
 
 ## 设计边界
 

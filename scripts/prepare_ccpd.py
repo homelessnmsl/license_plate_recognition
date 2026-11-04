@@ -5,11 +5,17 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections import Counter
 import hashlib
 import os
 import random
 import shutil
 from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 import yaml
 
@@ -26,8 +32,13 @@ def parse_ccpd_stem(stem: str) -> tuple[str, tuple[int, int, int, int]] | None:
         return None
     try:
         left_top, right_bottom = parts[2].split("_")
-        x1, y1 = (int(value) for value in left_top.split("&"))
-        x2, y2 = (int(value) for value in right_bottom.split("&"))
+
+        def parse_point(value: str) -> tuple[int, int]:
+            left, right = value.replace("&", ",").split(",")
+            return int(left), int(right)
+
+        x1, y1 = parse_point(left_top)
+        x2, y2 = parse_point(right_bottom)
         code = [int(value) for value in parts[4].split("_")]
         plate_text = PROVINCES[code[0]] + "".join(CHARACTERS[index] for index in code[1:])
         return plate_text, (x1, y1, x2, y2)
@@ -87,6 +98,7 @@ def main() -> int:
     used: set[str] = set()
     ground_truth: list[dict] = []
     converted = skipped = 0
+    converted_by_split: Counter[str] = Counter()
 
     for split, split_images in splits.items():
         for source in split_images:
@@ -131,6 +143,7 @@ def main() -> int:
                 }
             )
             converted += 1
+            converted_by_split[split] += 1
 
     dataset_yaml = BASE_DIR / "configs" / "plate_dataset.yaml"
     dataset_yaml.parent.mkdir(parents=True, exist_ok=True)
@@ -157,8 +170,8 @@ def main() -> int:
         writer.writeheader()
         writer.writerows(ground_truth)
 
-    print(f"converted={converted}, skipped={skipped}, train={len(splits['train'])}")
-    print(f"val={len(splits['val'])}")
+    print(f"converted={converted}, skipped={skipped}")
+    print(f"train={converted_by_split['train']}, val={converted_by_split['val']}")
     print(f"dataset_yaml={dataset_yaml}")
     print(f"ground_truth={gt_path}")
     print(f"suggested_weights={MODELS_DIR / 'yolov8n_plate.pt'}")

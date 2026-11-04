@@ -7,9 +7,13 @@ CCPD 文件名包含车牌区域、四个角点、车牌文本编码、亮度、
 转换命令：
 
 ```powershell
-python scripts/prepare_ccpd.py `
-  --ccpd-dir D:\datasets\CCPD `
-  --max-images 12000 `
+E:\venvs\lpr311\Scripts\python.exe scripts\prepare_ccpd_subset.py `
+  --root E:\license_plate_data `
+  --test-dir data\test
+
+E:\venvs\lpr311\Scripts\python.exe scripts\prepare_ccpd.py `
+  --ccpd-dir E:\license_plate_data\raw\ccpd_mixed_12k `
+  --output E:\license_plate_data\yolo `
   --val-ratio 0.15 `
   --mode hardlink
 ```

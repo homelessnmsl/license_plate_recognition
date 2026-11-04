@@ -43,6 +43,8 @@ data/test/*.png
 data/test/*.bmp
 data/test/*.webp
 !data/test/.gitkeep
+data/demo/*
+!data/demo/.gitkeep
 data/images/*
 data/labels/*
 !data/images/.gitkeep
@@ -51,6 +53,7 @@ outputs/*
 !outputs/images/.gitkeep
 !outputs/json/.gitkeep
 !outputs/video/.gitkeep
+configs/plate_dataset.yaml
 runs/
 
 # Logs
