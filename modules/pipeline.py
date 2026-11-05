@@ -12,7 +12,7 @@ from modules.detector import YOLOPlateDetector
 from modules.postprocess import make_candidate, rank_candidates
 from modules.preprocessing import read_image
 from modules.recognizer import PaddlePlateRecognizer
-from modules.rectifier import rectify_plate
+from modules.rectifier import classify_plate_color, crop_detection, rectify_plate
 from modules.schemas import Detection, OCRCandidate, PlateResult
 
 
@@ -55,15 +55,63 @@ class LicensePlatePipeline:
             plate_crop, plate_color, quad_found = rectify_plate(
                 image, detection, margin=self.config.plate_margin
             )
-            readings: list[OCRCandidate] = self.recognizer.recognize(  # type: ignore[attr-defined]
-                plate_crop
+            original_crop = crop_detection(
+                image, detection, margin=self.config.plate_margin
             )
+            if plate_color == "unknown":
+                plate_color = classify_plate_color(original_crop)
+
+            readings: list[OCRCandidate] = []
+            for crop_source, crop in (
+                ("rectified", plate_crop),
+                ("detection", original_crop),
+            ):
+                if crop.size == 0:
+                    continue
+                for item in self.recognizer.recognize(crop):  # type: ignore[attr-defined]
+                    readings.append(
+                        OCRCandidate(
+                            text=item.text,
+                            confidence=item.confidence,
+                            raw_text=item.raw_text,
+                            variant=f"{crop_source}:{item.variant}",
+                        )
+                    )
             formatted = rank_candidates(
                 [
                     make_candidate(item.text, item.confidence, item.variant)
                     for item in readings
                 ]
             )
+
+            needs_full_ocr = (
+                not formatted
+                or not formatted[0].valid
+                or formatted[0].confidence < 0.92
+                or (plate_color == "green" and len(formatted[0].text) != 8)
+            )
+            if needs_full_ocr and hasattr(self.recognizer, "recognize_full"):
+                for crop_source, crop in (
+                    ("rectified", plate_crop),
+                    ("detection", original_crop),
+                ):
+                    if crop.size == 0:
+                        continue
+                    for item in self.recognizer.recognize_full(crop):  # type: ignore[attr-defined]
+                        readings.append(
+                            OCRCandidate(
+                                text=item.text,
+                                confidence=item.confidence,
+                                raw_text=item.raw_text,
+                                variant=f"{crop_source}:{item.variant}",
+                            )
+                        )
+                formatted = rank_candidates(
+                    [
+                        make_candidate(item.text, item.confidence, item.variant)
+                        for item in readings
+                    ]
+                )
 
             if not formatted:
                 results.append(

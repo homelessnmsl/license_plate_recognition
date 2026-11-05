@@ -64,6 +64,24 @@ class PaddlePlateRecognizer:
                 readings.extend(PaddlePlateRecognizer._walk_results(item))
         return readings
 
+    def _candidates_from_result(
+        self, result: Any, variant_name: str
+    ) -> list[OCRCandidate]:
+        candidates: list[OCRCandidate] = []
+        for text, confidence in self._walk_results(result):
+            text = str(text).strip()
+            if not text or confidence < self.config.min_score:
+                continue
+            candidates.append(
+                OCRCandidate(
+                    text=text,
+                    confidence=float(confidence),
+                    raw_text=text,
+                    variant=variant_name,
+                )
+            )
+        return candidates
+
     def recognize(self, plate_image: np.ndarray) -> list[OCRCandidate]:
         self._load()
         assert self._ocr is not None
@@ -83,18 +101,31 @@ class PaddlePlateRecognizer:
             except Exception as exc:
                 raise OCRUnavailableError(f"PaddleOCR inference failed: {exc}") from exc
 
-            for text, confidence in self._walk_results(result):
-                text = str(text).strip()
-                key = text.upper()
-                if not text or key in seen or confidence < self.config.min_score:
+            for candidate in self._candidates_from_result(result, variant_name):
+                key = candidate.text.upper()
+                if key in seen:
                     continue
                 seen.add(key)
-                candidates.append(
-                    OCRCandidate(
-                        text=text,
-                        confidence=float(confidence),
-                        raw_text=text,
-                        variant=variant_name,
-                    )
-                )
+                candidates.append(candidate)
         return candidates
+
+    def recognize_full(self, plate_image: np.ndarray) -> list[OCRCandidate]:
+        """Fallback using PaddleOCR text detection plus recognition.
+
+        Recognition-only mode is faster and usually better for tight plate
+        crops, but detection+recognition can recover characters when the crop
+        contains background or when the recognition model drops a character.
+        """
+        self._load()
+        assert self._ocr is not None
+        try:
+            result = self._ocr.ocr(
+                plate_image, det=True, rec=True, cls=self.config.use_angle_cls
+            )
+        except TypeError as exc:
+            raise OCRUnavailableError(
+                "PaddleOCR API mismatch while running full OCR fallback."
+            ) from exc
+        except Exception as exc:
+            raise OCRUnavailableError(f"PaddleOCR full OCR failed: {exc}") from exc
+        return self._candidates_from_result(result, "full_det")

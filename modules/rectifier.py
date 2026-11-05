@@ -9,9 +9,9 @@ from modules.schemas import Detection
 
 
 COLOR_RANGES = {
-    "blue": ((90, 70, 40), (135, 255, 255)),
+    "blue": ((80, 70, 40), (135, 255, 255)),
     "yellow": ((15, 65, 70), (38, 255, 255)),
-    "green": ((35, 35, 35), (88, 255, 255)),
+    "green": ((35, 35, 35), (75, 255, 255)),
 }
 
 
@@ -50,14 +50,22 @@ def color_masks(image: np.ndarray) -> dict[str, np.ndarray]:
 
 
 def classify_plate_color(image: np.ndarray) -> str:
-    """Classify plate background color using HSV pixel ratios."""
+    """Classify plate color from the central ROI, reducing background bias."""
     if image.size == 0:
         return "unknown"
-    masks = color_masks(image)
-    total = float(image.shape[0] * image.shape[1])
+    height, width = image.shape[:2]
+    x1, x2 = int(width * 0.15), int(width * 0.85)
+    y1, y2 = int(height * 0.20), int(height * 0.80)
+    roi = image[max(0, y1):max(1, y2), max(0, x1):max(1, x2)]
+    masks = color_masks(roi)
+    total = float(roi.shape[0] * roi.shape[1])
     ratios = {name: float(np.count_nonzero(mask)) / total for name, mask in masks.items()}
     color, ratio = max(ratios.items(), key=lambda item: item[1])
-    return color if ratio >= 0.12 else "unknown"
+    if ratio < 0.10:
+        return "unknown"
+    if ratios["blue"] >= 0.10 and ratios["green"] >= 0.10:
+        return "green" if ratios["green"] > ratios["blue"] * 1.25 else "blue"
+    return color
 
 
 def order_quad_points(points: np.ndarray) -> np.ndarray:
