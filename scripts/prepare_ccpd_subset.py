@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import random
 import re
 import sys
@@ -124,6 +125,14 @@ def extract_train_subset(zip_path: Path, output_dir: Path, seed: int = 42) -> di
     return counts
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def extract_test_subset(
     zip_path: Path,
     test_dir: Path,
@@ -136,13 +145,22 @@ def extract_test_subset(
         for path in train_dir.glob("*.jpg")
         if (match := CATEGORY_PATTERN.search(path.name))
     }
+    print("hashing training images for content-level test isolation...")
+    train_hashes = {sha256_file(path) for path in train_dir.glob("*.jpg")}
     rng = random.Random(seed)
     selected: list[str] = []
+    with zipfile.ZipFile(zip_path) as archive:
+        candidate_hashes = {
+            name: hashlib.sha256(archive.read(name)).hexdigest()
+            for names in groups.values()
+            for name in names
+        }
     for category, count in TEST_TARGETS.items():
         candidates = [
             name
             for name in groups.get(category, [])
             if not ((match := CATEGORY_PATTERN.search(name)) and match.group(0) in train_suffixes)
+            and candidate_hashes[name] not in train_hashes
         ]
         if len(candidates) < count:
             raise ValueError(f"Not enough disjoint test images for {category}")

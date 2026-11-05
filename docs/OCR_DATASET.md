@@ -26,7 +26,7 @@ E:\venvs\lpr311\Scripts\python.exe scripts\prepare_ocr_dataset.py `
 有效裁剪：10,555
 训练集：8,976
 验证集：1,579
-测试集：27
+测试集：28
 ```
 
 过滤情况：

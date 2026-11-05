@@ -36,13 +36,16 @@ class PaddlePlateRecognizer:
                 "PaddleOCR is not installed. Install requirements first."
             ) from exc
 
+        kwargs = {
+            "use_angle_cls": self.config.use_angle_cls,
+            "lang": self.config.lang,
+            "use_gpu": self.config.use_gpu,
+            "show_log": False,
+        }
+        if self.config.rec_model_dir is not None:
+            kwargs["rec_model_dir"] = str(self.config.rec_model_dir)
         try:
-            self._ocr = PaddleOCR(
-                use_angle_cls=self.config.use_angle_cls,
-                lang=self.config.lang,
-                use_gpu=self.config.use_gpu,
-                show_log=False,
-            )
+            self._ocr = PaddleOCR(**kwargs)
         except Exception as exc:
             raise OCRUnavailableError(
                 "PaddleOCR initialization failed. Check the PaddlePaddle wheel "

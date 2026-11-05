@@ -58,6 +58,13 @@ class OCRConfig:
     accept_confidence: float = 0.60
     use_angle_cls: bool = False
     model_dir: Path = MODELS_DIR / "paddleocr"
+    rec_model_dir: Path | None = field(
+        default_factory=lambda: (
+            Path(os.environ["LPR_OCR_REC_MODEL_DIR"])
+            if os.getenv("LPR_OCR_REC_MODEL_DIR")
+            else None
+        )
+    )
 
 
 @dataclass(frozen=True)
