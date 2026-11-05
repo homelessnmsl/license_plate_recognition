@@ -35,10 +35,11 @@ def draw_results(image: np.ndarray, results: list[PlateResult]) -> np.ndarray:
 
     for index, result in enumerate(results, start=1):
         x1, y1, x2, y2 = result.bbox
-        color = (35, 190, 90) if result.valid else (240, 160, 30)
+        color = (35, 190, 90) if result.accepted else (220, 120, 40)
         draw.rectangle((x1, y1, x2, y2), outline=color, width=3)
+        display_text = result.plate_text if result.accepted else "无法可靠识别"
         label = (
-            f"{index}. {result.plate_text or '未识别'}  "
+            f"{index}. {display_text}  "
             f"{result.score:.2f}  {result.plate_color}"
         )
         left, top, right, bottom = draw.textbbox((0, 0), label, font=font)

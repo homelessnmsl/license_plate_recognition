@@ -131,11 +131,25 @@ class LicensePlatePipeline:
                         processing_time_ms=(time.perf_counter() - start) * 1000.0,
                         candidates=[],
                         error="OCR returned no usable text.",
+                        accepted=False,
+                        status="no_text",
                     )
                 )
                 continue
 
             best = formatted[0]
+            accepted = (
+                best.valid
+                and best.confidence >= self.config.ocr.accept_confidence
+            )
+            status = "accepted" if accepted else "rejected"
+            error = None
+            if not accepted:
+                error = (
+                    "low_confidence"
+                    if best.confidence < self.config.ocr.accept_confidence
+                    else "invalid_plate_format"
+                )
             score = (
                 0.35 * detection.confidence
                 + 0.45 * best.confidence
@@ -149,7 +163,7 @@ class LicensePlatePipeline:
                     image_path=source,
                     bbox=detection.bbox,
                     detection_confidence=round(detection.confidence, 4),
-                    plate_text=best.text,
+                    plate_text=best.text if accepted else "",
                     ocr_confidence=round(best.confidence, 4),
                     score=round(min(1.0, score), 4),
                     valid=best.valid,
@@ -162,6 +176,9 @@ class LicensePlatePipeline:
                         (time.perf_counter() - start) * 1000.0, 2
                     ),
                     candidates=formatted[:6],
+                    accepted=accepted,
+                    status=status,
+                    error=error,
                 )
             )
 

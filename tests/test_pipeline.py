@@ -28,6 +28,11 @@ class FakeRecognizer:
         return [OCRCandidate("京A12345", 0.96, raw_text="京A12345", variant="color")]
 
 
+class InvalidRecognizer:
+    def recognize(self, plate_image):
+        return [OCRCandidate("ABC", 0.30, raw_text="ABC", variant="color")]
+
+
 @unittest.skipUnless(HAS_CV2 and HAS_NUMPY, "numpy/OpenCV not installed")
 class PipelineTests(unittest.TestCase):
     def test_pipeline_orchestration(self) -> None:
@@ -37,6 +42,16 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].plate_text, "京A12345")
         self.assertTrue(results[0].valid)
+        self.assertTrue(results[0].accepted)
+
+    def test_invalid_result_is_rejected(self) -> None:
+        image = np.full((80, 200, 3), 230, dtype=np.uint8)
+        pipeline = LicensePlatePipeline(FakeDetector(), InvalidRecognizer())
+        results = pipeline.process_array(image, source="fake.jpg")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].plate_text, "")
+        self.assertFalse(results[0].accepted)
+        self.assertEqual(results[0].status, "rejected")
 
 
 if __name__ == "__main__":

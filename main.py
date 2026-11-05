@@ -71,7 +71,7 @@ def _print_results(results: list) -> None:
     for index, result in enumerate(results, start=1):
         print(
             f"[{index}] {result.plate_text or '<empty>'} | "
-            f"color={result.plate_color} | valid={result.valid} | "
+            f"color={result.plate_color} | status={result.status} | valid={result.valid} | "
             f"det={result.detection_confidence:.3f} | "
             f"ocr={result.ocr_confidence:.3f} | score={result.score:.3f} | "
             f"time={result.processing_time_ms:.1f} ms"
@@ -142,6 +142,8 @@ def _run_images(pipeline, input_path: Path, output_root: Path, show: bool, limit
             "score",
             "bbox",
             "processing_time_ms",
+            "status",
+            "accepted",
             "error",
         ],
     )

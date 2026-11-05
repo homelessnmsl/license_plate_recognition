@@ -57,6 +57,8 @@ class PlateResult:
     processing_time_ms: float
     candidates: list[OCRCandidate] = field(default_factory=list)
     error: str | None = None
+    accepted: bool = False
+    status: str = "rejected"
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

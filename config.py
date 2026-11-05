@@ -55,6 +55,7 @@ class OCRConfig:
         in {"1", "true", "yes", "on"}
     )
     min_score: float = 0.35
+    accept_confidence: float = 0.60
     use_angle_cls: bool = False
     model_dir: Path = MODELS_DIR / "paddleocr"
 

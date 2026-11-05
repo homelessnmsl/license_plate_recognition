@@ -74,7 +74,7 @@ def evaluate_results(
         grouped.setdefault(key, []).append(row)
         grouped_by_name.setdefault(Path(key).name, []).append(row)
 
-    total = localized = recognized = 0
+    total = localized = recognized = accepted = 0
     char_correct = total_chars = 0
     times: list[float] = []
     details: list[dict[str, Any]] = []
@@ -97,8 +97,11 @@ def evaluate_results(
 
         hypothesis = str(best.get("plate_text", ""))
         exact = localized_ok and hypothesis == reference
-        if localized_ok and hypothesis:
+        accepted_ok = bool(best.get("accepted", bool(hypothesis)))
+        if exact:
             recognized += 1
+        if accepted_ok:
+            accepted += 1
         total_chars += len(reference)
         char_correct += max(0, len(reference) - edit_distance(reference, hypothesis))
         if "processing_time_ms" in best:
@@ -119,6 +122,8 @@ def evaluate_results(
         "total": total,
         "localized": localized,
         "recognized": recognized,
+        "accepted": accepted,
+        "rejected": total - accepted,
         "localization_accuracy": round(localized / n, 4),
         "recognition_accuracy": round(recognized / localized, 4) if localized else 0.0,
         "overall_accuracy": round(
