@@ -65,12 +65,16 @@ def build_split(
     output_image_dir: Path,
     label_file: Path,
     seen_hashes: set[str],
+    excluded: set[str],
     stats: Counter,
     category_counts: Counter,
 ) -> None:
     output_image_dir.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
     for image_path in sorted(image_dir.glob("*.jpg")):
+        if image_path.stem in excluded:
+            stats["skip_excluded"] += 1
+            continue
         parsed = parse_ccpd_stem(image_path.stem)
         if parsed is None:
             stats["skip_unparsable"] += 1
@@ -127,7 +131,15 @@ def main() -> int:
     parser.add_argument("--yolo-root", type=Path, default=Path(r"E:\license_plate_data\yolo"))
     parser.add_argument("--output", type=Path, default=Path(r"E:\license_plate_data\ocr"))
     parser.add_argument("--test-root", type=Path, default=PROJECT_ROOT / "data" / "test")
+    parser.add_argument("--exclude-list", type=Path, default=None)
     args = parser.parse_args()
+    excluded: set[str] = set()
+    if args.exclude_list and args.exclude_list.is_file():
+        excluded = {
+            line.strip().removesuffix(".jpg")
+            for line in args.exclude_list.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        }
 
     stats: Counter[str] = Counter()
     category_counts: Counter[str] = Counter()
@@ -142,6 +154,7 @@ def main() -> int:
         args.output / "images" / "train",
         args.output / "labels" / "train.txt",
         seen_hashes,
+        excluded,
         stats,
         category_counts,
     )
@@ -151,6 +164,7 @@ def main() -> int:
         args.output / "images" / "val",
         args.output / "labels" / "val.txt",
         seen_hashes,
+        excluded,
         stats,
         category_counts,
     )

@@ -37,6 +37,7 @@ E:\venvs\lpr311\Scripts\python.exe scripts\prepare_ocr_dataset.py `
 | 长宽比异常 | 1000 |
 | 过暗 | 57 |
 | 过模糊 | 7 |
+| 人工剔除 | 1 |
 | 测试集长宽比异常 | 3 |
 
 其中 9,212 张由颜色四边形成功透视矫正。
