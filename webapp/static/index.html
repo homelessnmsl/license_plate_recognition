@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="YOLOv8n + PP-OCRv4 中文车牌识别，支持手机拍照与电脑上传。">
+  <title>Plate Lens · 智能车牌识别</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css?v=2">
+</head>
+<body>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Plate Lens 首页">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5h16v9H4z" stroke="currentColor" stroke-width="1.7"/><path d="M7 10h2M11 10h2M15 10h2M7 13.5h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </span>
+      <span><b>Plate Lens</b><small>车牌识别工作台</small></span>
+    </a>
+    <div class="model-pill" id="modelPill">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="modelStatus">正在连接模型</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span>YOLOv8n</span><i></i><span>PP-OCRv4</span></p>
+        <h1><span class="hero-line">拍一张，</span><span class="hero-line"><em>车牌立现。</em></span></h1>
+        <p class="hero-text">面向中文车牌的两阶段识别引擎。上传照片或用手机直接拍摄，几秒内得到车牌号码、颜色与置信度。</p>
+        <div class="hero-tags" aria-label="能力">
+          <span>手机 / 电脑自适应</span>
+          <span>透视矫正</span>
+          <span>低置信度拒识</span>
+        </div>
+      </div>
+      <div class="hero-orbit" aria-hidden="true">
+        <div class="orbit-ring ring-a"></div>
+        <div class="orbit-ring ring-b"></div>
+        <div class="plate-visual">
+          <span>皖 A · 237 S7</span>
+          <small>LICENSE PLATE RECOGNITION</small>
+        </div>
+        <span class="scan-line"></span>
+        <span class="corner c1"></span><span class="corner c2"></span>
+        <span class="corner c3"></span><span class="corner c4"></span>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="车牌识别工作区">
+      <article class="panel upload-panel">
+        <div class="panel-head">
+          <div>
+            <p class="kicker">01 / 输入</p>
+            <h2>选择车牌照片</h2>
+          </div>
+          <span class="mini-badge">JPG · PNG · WEBP</span>
+        </div>
+
+        <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="选择或拖放车牌图片">
+          <div class="drop-idle" id="dropIdle">
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none"><path d="M16 22V7m0 0-6 6m6-6 6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 21v3.5A2.5 2.5 0 0 0 8.5 27h15a2.5 2.5 0 0 0 2.5-2.5V21" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+            </span>
+            <h3>拖放图片到这里</h3>
+            <p>也可以点击选择文件，或使用手机摄像头拍照</p>
+            <div class="upload-actions">
+              <button class="btn btn-primary" id="pickButton" type="button">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h3l1.2 1.7h6.8A1.5 1.5 0 0 1 17 7.2v7.3a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 14.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="m6.8 13 2.3-2.5 1.8 1.8 1.4-1.3 1.7 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                选择图片
+              </button>
+              <button class="btn btn-ghost" id="cameraButton" type="button">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 6.5h2.2l1-1.5h6.6l1 1.5h2.2v9h-13v-9Z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10.7" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                拍照识别
+              </button>
+            </div>
+            <div class="demo-row">
+              <span>没有素材？</span>
+              <button type="button" class="text-button" data-demo="/demo/smoke_plate.jpg">载入示例</button>
+            </div>
+          </div>
+
+          <div class="preview-stage is-hidden" id="previewStage">
+            <img id="previewImage" alt="待识别图片预览">
+            <div class="preview-overlay">
+              <span id="previewName">image.jpg</span>
+              <button class="icon-btn" id="replaceButton" type="button" aria-label="重新选择图片">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.5 7.5A6 6 0 1 1 4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.5 3.5v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                换一张
+              </button>
+            </div>
+            <div class="scanning" id="scanning" aria-hidden="true"><span></span></div>
+          </div>
+        </div>
+
+        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+        <input id="cameraInput" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden>
+
+        <div class="upload-foot">
+          <span><i class="shield-dot"></i> 图片仅用于本次识别，不在服务器留存</span>
+          <span id="uploadLimit">单张最大 15 MB</span>
+        </div>
+      </article>
+
+      <aside class="panel result-panel" id="resultPanel" aria-live="polite">
+        <div class="panel-head">
+          <div>
+            <p class="kicker">02 / 结果</p>
+            <h2>识别结果</h2>
+          </div>
+          <span class="result-time" id="resultTime">等待输入</span>
+        </div>
+
+        <div class="result-state" id="resultEmpty">
+          <div class="empty-illustration" aria-hidden="true">
+            <span class="empty-plate">?</span>
+            <span class="empty-scan"></span>
+          </div>
+          <h3>结果会显示在这里</h3>
+          <p>上传清晰、车牌占比适中的照片，识别效果最佳。</p>
+          <div class="tips">
+            <span>正对车牌</span><span>光线充足</span><span>避免模糊</span>
+          </div>
+        </div>
+
+        <div class="result-state is-hidden" id="resultLoading">
+          <div class="loader" aria-hidden="true"><span></span><span></span><span></span></div>
+          <h3 id="loadingTitle">正在定位车牌</h3>
+          <p id="loadingHint">首次推理需要加载模型，之后会更快</p>
+          <div class="progress-track"><span id="progressBar"></span></div>
+        </div>
+
+        <div class="result-state is-hidden" id="resultError">
+          <span class="state-icon error-icon" aria-hidden="true">!</span>
+          <h3>识别没有完成</h3>
+          <p id="errorMessage">请稍后重试。</p>
+          <button class="btn btn-ghost" id="retryButton" type="button">重新尝试</button>
+        </div>
+
+        <div class="is-hidden" id="resultContent">
+          <div class="result-summary">
+            <div>
+              <span class="summary-number" id="summaryNumber">0</span>
+              <span class="summary-label">个车牌</span>
+            </div>
+            <span class="summary-chip" id="summaryChip">识别完成</span>
+          </div>
+          <div class="plate-list" id="plateList"></div>
+          <figure class="annotated-wrap">
+            <img id="annotatedImage" alt="标注后的车牌识别结果">
+            <figcaption>
+              <span>检测框与识别结果</span>
+              <a class="text-button" id="downloadButton" download="plate-result.jpg">保存标注图</a>
+            </figcaption>
+          </figure>
+          <p class="result-note">置信度不足或格式异常的车牌会被主动拒识，以保证输出可靠性。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="how-it-works" aria-label="技术流程">
+      <div><span>01</span><b>检测定位</b><small>YOLOv8n 找到车牌区域</small></div>
+      <i></i>
+      <div><span>02</span><b>透视矫正</b><small>颜色分析与四角校正</small></div>
+      <i></i>
+      <div><span>03</span><b>字符识别</b><small>PP-OCRv4 中文车牌微调</small></div>
+      <i></i>
+      <div><span>04</span><b>规则融合</b><small>格式校验与候选排序</small></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Plate Lens · 本地部署的车牌识别演示</span>
+    <span>YOLOv8n + PaddleOCR</span>
+  </footer>
+
+  <dialog id="keyDialog" class="key-dialog">
+    <form method="dialog" id="keyForm">
+      <span class="state-icon key-icon" aria-hidden="true">⌁</span>
+      <h2>输入访问码</h2>
+      <p>此服务已启用访问保护，请输入分享者提供的访问码。</p>
+      <label for="keyInput">访问码</label>
+      <input id="keyInput" type="password" autocomplete="one-time-code" placeholder="例如：AB12CD" required>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="keyCancel" type="button">取消</button>
+        <button class="btn btn-primary" value="confirm" type="submit" id="keyConfirm">继续</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js?v=2" defer></script>
+</body>
+</html>

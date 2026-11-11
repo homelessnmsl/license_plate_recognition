@@ -59,3 +59,8 @@ runs/
 # Logs
 *.log
 logs/
+
+# Deployment artifacts
+deploy/models/*
+!deploy/models/.gitkeep
+tools/

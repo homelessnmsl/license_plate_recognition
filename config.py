@@ -62,7 +62,11 @@ class OCRConfig:
         default_factory=lambda: (
             Path(os.environ["LPR_OCR_REC_MODEL_DIR"])
             if os.getenv("LPR_OCR_REC_MODEL_DIR")
-            else None
+            else (
+                MODELS_DIR / "ocr_rec"
+                if (MODELS_DIR / "ocr_rec" / "inference.pdmodel").is_file()
+                else None
+            )
         )
     )
 

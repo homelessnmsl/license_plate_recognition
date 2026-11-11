@@ -1,0 +1,7 @@
+# Web deployment runtime. Install into the same Python environment as PaddleOCR.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+python-multipart>=0.0.9,<1
+onnx==1.16.2
+onnxruntime==1.19.2
+

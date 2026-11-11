@@ -9,6 +9,7 @@ import numpy as np
 
 from config import CONFIG, PipelineConfig
 from modules.detector import YOLOPlateDetector
+from modules.onnx_detector import ONNXPlateDetector
 from modules.postprocess import make_candidate, rank_candidates
 from modules.preprocessing import read_image
 from modules.recognizer import PaddlePlateRecognizer
@@ -43,7 +44,12 @@ class LicensePlatePipeline:
         config: PipelineConfig = CONFIG,
     ) -> None:
         self.config = config
-        self.detector = detector or YOLOPlateDetector(config.detector)
+        if detector is not None:
+            self.detector = detector
+        elif str(config.detector.weights).lower().endswith(".onnx"):
+            self.detector = ONNXPlateDetector(config.detector)
+        else:
+            self.detector = YOLOPlateDetector(config.detector)
         self.recognizer = recognizer or PaddlePlateRecognizer(config.ocr)
 
     def process_array(self, image: np.ndarray, source: str = "<array>") -> list[PlateResult]:

@@ -24,7 +24,9 @@ YOLOv8n 检测车牌 → 颜色分析与倾斜矫正 → PaddleOCR 识别车牌�
 - 已生成 10,554 张 PaddleOCR 微调裁剪
 - 已完成 PP-OCRv4 微调，端到端测试准确率 93.3%
 - 已加入低质量图片拒识策略（低置信度或非法格式不输出车牌）
-- 尚未使用自训练权重完成最终测试
+- 已导出 ONNX 检测模型并完成 FastAPI Web 部署
+- 已完成手机/电脑响应式前端与公网内网穿透
+- 使用自训练权重在 30 张隔离测试图上完成最终复测，结果 30/30
 
 ## 环境
 
@@ -84,6 +86,24 @@ YOLO 默认权重路径：
 data/models/yolov8n_plate.pt
 ```
 
+## Web 部署
+
+```powershell
+# 1. 导出 ONNX 检测模型并打包 OCR 微调模型
+python scripts/export_models.py --device 0
+
+# 2. 安装 Web 运行依赖
+pip install -r requirements-web.txt
+
+# 3. 启动局域网服务（会生成访问码并打印局域网地址）
+.\scripts\start_web.ps1 -Port 8000
+
+# 4. 另开一个终端，启动公网隧道
+.\scripts\start_tunnel.ps1 -Port 8000
+```
+
+公网隧道启动后，在终端输出的 HTTPS 地址后追加 `?key=访问码`，手机和电脑均可直接打开。完整说明见 `docs/WEB_DEPLOY.md`。
+
 ## 项目结构
 
 ```text
@@ -108,6 +128,8 @@ license_plate_recognition/
 │   ├── evaluation.py               # 指标计算
 │   └── file_utils.py               # 文件导出
 ├── gui/app.py                      # Tkinter 界面
+├── webapp/                         # FastAPI 服务与响应式前端
+├── deploy/models/                  # 部署模型产物（默认不提交 Git）
 ├── scripts/
 │   ├── prepare_ccpd.py             # CCPD → YOLO
 │   ├── train_yolo.py               # YOLO 微调
@@ -128,6 +150,7 @@ license_plate_recognition/
 - `docs/DATASET.md`：CCPD 转换与自建测试集规范
 - docs/DATA_SUMMARY.md：CCPD 子集、数据划分与基线结果
 - docs/EXPERIMENTS.md：指标与消融实验设计
+- docs/WEB_DEPLOY.md：模型导出、Web 服务与内网穿透说明
 
 ## 设计边界
 
